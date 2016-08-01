@@ -1,24 +1,58 @@
 <!doctype html>
 <html>
 <head lang='zh-CN'>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="http://cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">
+  <!--<script src="WebViewJavascriptBridge.js"></script>-->
 
+  <script>
+    function setupWebViewJavascriptBridge(callback) {
+      if (window.WebViewJavascriptBridge) { return callback(WebViewJavascriptBridge); }
+      if (window.WVJBCallbacks) { return window.WVJBCallbacks.push(callback); }
+      window.WVJBCallbacks = [callback];
+      var WVJBIframe = document.createElement('iframe');
+      WVJBIframe.style.display = 'none';
+      WVJBIframe.src = 'wvjbscheme://__BRIDGE_LOADED__';
+      document.documentElement.appendChild(WVJBIframe);
+      setTimeout(function() { document.documentElement.removeChild(WVJBIframe) }, 0)
+    }
+  </script>
 </head>
 <body>
 
-<button id='btn-alert'>
+<div class="container" style="padding-top: 20px;">
+  <button class="btn btn-default btn-block btn-alert" data-message="这是一个消息">
     Alert
-</button>
+  </button>
 
+  <button class="btn btn-default btn-block btn-danger">
+    Confirm
+  </button>
+</div>
+
+<script src="http://cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
 
 <script>
 
-    var btnAlert = document.getElementById('btn-alert');
-    btnAlert.onclick = function () {
-        alert('Hello!');
-    }
+  /* DialogAlert */
+  function DialogAlert(message) {
+    setupWebViewJavascriptBridge(function (bridge) {
+      bridge.callHandler('DialogAlert', {message: message}, function (response) {
+        console.log(response);
+      })
+    });
+  }
 
+  $(function () {
+
+    $('.btn-alert').on('click', function () {
+      var message = $(this).data('message');
+      console.log(message);
+      DialogAlert(message);
+    })
+
+  })
 </script>
 </body>
 </html>

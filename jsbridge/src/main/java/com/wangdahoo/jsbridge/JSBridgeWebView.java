@@ -20,19 +20,29 @@ import java.io.InputStreamReader;
 @SuppressLint("SetJavaScriptEnabled")
 public class JSBridgeWebView extends WebView {
 
-    public JSBridgeWebView(Context context) {
+    MessageDispatcher messageDispatcher;
+
+    /**
+     *
+     * @param context
+     * @param messageDispatcher 传入已经注册好组件的MessageDispatcher实例
+     */
+    public JSBridgeWebView(Context context, MessageDispatcher messageDispatcher) {
         super(context);
         initWebViewSettings();
+        this.messageDispatcher = messageDispatcher;
     }
 
-    public JSBridgeWebView(Context context, AttributeSet attrs) {
+    public JSBridgeWebView(Context context, AttributeSet attrs, MessageDispatcher messageDispatcher) {
         super(context, attrs);
         initWebViewSettings();
+        this.messageDispatcher = messageDispatcher;
     }
 
-    public JSBridgeWebView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public JSBridgeWebView(Context context, AttributeSet attrs, int defStyleAttr, MessageDispatcher messageDispatcher) {
         super(context, attrs, defStyleAttr);
         initWebViewSettings();
+        this.messageDispatcher = messageDispatcher;
     }
 
     private void initWebViewSettings() {
@@ -81,10 +91,10 @@ public class JSBridgeWebView extends WebView {
         settings.setUserAgentString(defaultUserAgent + " JSBridge/1.0.0");
 
         // Set WebViewClient
-        this.setWebViewClient(new JSBridgeWebViewClient());
+        this.setWebViewClient(new JSBridgeWebViewClient(this));
         this.setWebChromeClient(new WebChromeClient());
 
-        injectJSBridge(this, "file:///android_asset/WebViewJavascriptBridge.js");
+        injectJSBridge(this, "WebViewJavascriptBridge.js");
     }
 
     public static void injectJSBridge(JSBridgeWebView webView, String url) {

@@ -42,15 +42,6 @@
 		dispatchMessagesWithTimeoutSafety = false;
 	}
 
-	function _doSend(message, responseCallback) {
-		if (responseCallback) {
-			var callbackId = 'cb_'+(uniqueId++)+'_'+new Date().getTime();
-			responseCallbacks[callbackId] = responseCallback;
-			message['callbackId'] = callbackId;
-		}
-		sendMessageQueue.push(message);
-		messagingIframe.src = CUSTOM_PROTOCOL_SCHEME + '://' + QUEUE_HAS_MESSAGE;
-	}
 
 	function _fetchQueue() {
 		var messageQueueString = JSON.stringify(sendMessageQueue);
