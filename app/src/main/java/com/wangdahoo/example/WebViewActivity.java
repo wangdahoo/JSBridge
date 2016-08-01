@@ -10,39 +10,26 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
+import com.wangdahoo.jsbridge.JSBridgeWebView;
+import com.wangdahoo.jsbridge.JSBridgeWebViewClient;
+import com.wangdahoo.jsbridge.MessageDispatcher;
+
 public class WebViewActivity extends AppCompatActivity {
 
-    final String TAG = "WEBVIEW_ACTIVITY";
+    final String TAG = "WV_ACTIVITY";
 
-    final String CUSTOM_PROTOCOL_SCHEME = "wvjbscheme";
-    final String QUEUE_HAS_MESSAGE = "__WVJB_QUEUE_MESSAGE__";
-
-    WebView webView;
-
-    private Callback callback = new Callback() {
-        @Override
-        public void onCallback(final String data) {
-            Log.i(TAG, "Message has been handled by handler, send back response to js"); // 再把消息发回给js环境
-
-            webView.post(new Runnable() {
-                @Override
-                public void run() {
-                    webView.loadUrl("javascript:window.WebViewJavascriptBridge._responseBackFromJava('" + data + "')");
-                }
-            });
-        }
-    };
+    JSBridgeWebView webView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_web_view);
 
-        webView = new WebView(this);
-        webView.setWebViewClient(new MyWebViewClient());
+        webView = new JSBridgeWebView(this);
+        MessageDispatcher messageDispatcher = new MessageDispatcher();
+        messageDispatcher.registerHandler("DialogAlert", new DialogAlertHandler(this));
+        webView.setWebViewClient(new JSBridgeWebViewClient(webView, messageDispatcher));
         webView.setWebChromeClient(new WebChromeClient());
-
-        webView.getSettings().setJavaScriptEnabled(true);
 
         webView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
@@ -51,35 +38,11 @@ public class WebViewActivity extends AppCompatActivity {
             webView.setWebContentsDebuggingEnabled(true);
         }
 
-        MessageDispatcher messageDispatcher = new MessageDispatcher(callback);
-        messageDispatcher.registerHandler("DialogAlert", new DialogAlertHandler(this));
-
-        webView.addJavascriptInterface(messageDispatcher, "MessageDispatcher");
-        JSBridgeUtils.injectJSBridge(webView, "WebViewJavascriptBridge.js");
-
         ViewGroup layout = (ViewGroup) findViewById(R.id.webview_activity);
         layout.addView(webView);
 
 //        webView.loadUrl("http://www.baidu.com");
 
         webView.loadUrl("file:///android_asset/index.html");
-    }
-
-    private class MyWebViewClient extends WebViewClient {
-
-        @Override
-        public boolean shouldOverrideUrlLoading(WebView view, String url) {
-
-            Log.i(TAG, "url: " + url);
-
-            // 拦截js端发送过来的消息
-            if (url.startsWith(CUSTOM_PROTOCOL_SCHEME + "://" + QUEUE_HAS_MESSAGE)) {
-                String script = "WebViewJavascriptBridge._fetchQueue()";
-                webView.loadUrl("javascript:window.MessageDispatcher.onReceiveMessage(" + script + ")");
-                return true;
-            }
-
-            return super.shouldOverrideUrlLoading(view, url);
-        }
     }
 }

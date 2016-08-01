@@ -1,108 +1,109 @@
-;(function() {
-	if (window.WebViewJavascriptBridge) {
-		return;
-	}
+;(function () {
 
-	if (!window.onerror) {
-		window.onerror = function(msg, url, line) {
-			console.log("WebViewJavascriptBridge: ERROR:" + msg + "@" + url + ":" + line);
-		}
-	}
-	window.WebViewJavascriptBridge = {
-		registerHandler: registerHandler,
-		callHandler: callHandler,
-		disableJavscriptAlertBoxSafetyTimeout: disableJavscriptAlertBoxSafetyTimeout,
-		_fetchQueue: _fetchQueue,
-		_handleMessageFromObjC: _handleMessageFromObjC
-	};
+  if (window.WebViewJavascriptBridge) {
+    return;
+  }
 
-	var messagingIframe;
-	var sendMessageQueue = [];
-	var messageHandlers = {};
+  window.WebViewJavascriptBridge = {
+    registerHandler: registerHandler,
+    callHandler: callHandler,
+    _fetchQueue: _fetchQueue,
+    _responseBackFromJava: _responseBackFromJava
+  };
 
-	var CUSTOM_PROTOCOL_SCHEME = 'wvjbscheme';
-	var QUEUE_HAS_MESSAGE = '__WVJB_QUEUE_MESSAGE__';
+  var CUSTOM_PROTOCOL_SCHEME = 'wvjbscheme';
+  var QUEUE_HAS_MESSAGE = '__WVJB_QUEUE_MESSAGE__';
 
-	var responseCallbacks = {};
-	var uniqueId = 1;
-	var dispatchMessagesWithTimeoutSafety = true;
+  /**
+   * 用于发送消息的iFrame
+   * @type {Element}
+   */
+  var messagingIframe;
 
-	function registerHandler(handlerName, handler) {
-		messageHandlers[handlerName] = handler;
-	}
+  var sendMessageQueue = [];
+  var responseCallbacks = {};
 
-	function callHandler(handlerName, data, responseCallback) {
-		if (arguments.length == 2 && typeof data == 'function') {
-			responseCallback = data;
-			data = null;
-		}
-		_doSend({ handlerName:handlerName, data:data }, responseCallback);
-	}
-	function disableJavscriptAlertBoxSafetyTimeout() {
-		dispatchMessagesWithTimeoutSafety = false;
-	}
+  var messageHandlers = {};
 
+  var uniqueId = 1;
 
-	function _fetchQueue() {
-		var messageQueueString = JSON.stringify(sendMessageQueue);
-		sendMessageQueue = [];
-		return messageQueueString;
-	}
+  /**
+   * 注册JS Handler
+   * @param handlerName
+   * @param handler
+   */
+  function registerHandler(handlerName, handler) {
+    messageHandlers[handlerName] = handler;
+  }
 
-	function _dispatchMessageFromObjC(messageJSON) {
-		if (dispatchMessagesWithTimeoutSafety) {
-			setTimeout(_doDispatchMessageFromObjC);
-		} else {
-			 _doDispatchMessageFromObjC();
-		}
+  /**
+   * 调用原生Handler
+   * @param handlerName
+   * @param data
+   * @param responseCallback
+   */
+  function callHandler(handlerName, data, responseCallback) {
+    if (arguments.length == 2 && typeof data == 'function') {
+      responseCallback = data;
+      data = null;
+    }
+    // 消息中注明调用的Handler名称
+    _doSend({ handlerName:handlerName, data:data }, responseCallback);
+  }
 
-		function _doDispatchMessageFromObjC() {
-			var message = JSON.parse(messageJSON);
-			var messageHandler;
-			var responseCallback;
+  /**
+   * 发消息给webview
+   * @param message           发送给原生代码的消息
+   * @param responseCallback  处理原生返回数据的回调函数
+   * @private
+   */
+  function _doSend(message, responseCallback) {
+    if (responseCallback) {
+      // 生成唯一的callbackId作为message的唯一标识符及回调函数的键
+      var callbackId = 'cb_' + (uniqueId++) + '_' + new Date().getTime();
+      responseCallbacks[callbackId] = responseCallback;
+      message['callbackId'] = callbackId;
+    }
+    // 将消息放入消息队列中, 等待原生代码读取
+    sendMessageQueue.push(message);
+    // 通知原生代码消息队列中有消息
+    //messagingIframe.src = CUSTOM_PROTOCOL_SCHEME + '://' + QUEUE_HAS_MESSAGE;
 
-			if (message.responseId) {
-				responseCallback = responseCallbacks[message.responseId];
-				if (!responseCallback) {
-					return;
-				}
-				responseCallback(message.responseData);
-				delete responseCallbacks[message.responseId];
-			} else {
-				if (message.callbackId) {
-					var callbackResponseId = message.callbackId;
-					responseCallback = function(responseData) {
-						_doSend({ handlerName:message.handlerName, responseId:callbackResponseId, responseData:responseData });
-					};
-				}
+    messagingIframe = document.createElement('iframe');
+    messagingIframe.style.display = 'none';
+    messagingIframe.src = CUSTOM_PROTOCOL_SCHEME + '://' + QUEUE_HAS_MESSAGE;
+    document.documentElement.appendChild(messagingIframe);
 
-				var handler = messageHandlers[message.handlerName];
-				if (!handler) {
-					console.log("WebViewJavascriptBridge: WARNING: no handler for message from ObjC:", message);
-				} else {
-					handler(message.data, responseCallback);
-				}
-			}
-		}
-	}
+    setTimeout(function () { document.documentElement.removeChild(messagingIframe) });
+  }
 
-	function _handleMessageFromObjC(messageJSON) {
-        _dispatchMessageFromObjC(messageJSON);
-	}
+  /**
+   * 原生代码将调用这个方法来读取消息队列中的消息
+   * @private
+   */
+  function _fetchQueue() {
+    var messageQueueString = JSON.stringify(sendMessageQueue);
+    sendMessageQueue = [];
+    return messageQueueString;
+  }
 
-	messagingIframe = document.createElement('iframe');
-	messagingIframe.style.display = 'none';
-	messagingIframe.src = CUSTOM_PROTOCOL_SCHEME + '://' + QUEUE_HAS_MESSAGE;
-	document.documentElement.appendChild(messagingIframe);
+  /**
+   * 原生代码调用这个方法来发回response到js端
+   * @param messageJSON
+   * @private
+   */
+  function _responseBackFromJava(messageJSON) {
+    var message = JSON.parse(messageJSON);
+    var responseId = message.responseId;
 
-	registerHandler("_disableJavascriptAlertBoxSafetyTimeout", disableJavscriptAlertBoxSafetyTimeout);
+    if (responseId) {
+      var cb = responseCallbacks[message.responseId];
+      if (!cb) {
+        return;
+      }
+      cb(message.responseData);
+      delete responseCallbacks[message.responseId];
+    }
+  }
 
-	setTimeout(_callWVJBCallbacks, 0);
-	function _callWVJBCallbacks() {
-		var callbacks = window.WVJBCallbacks;
-		delete window.WVJBCallbacks;
-		for (var i=0; i<callbacks.length; i++) {
-			callbacks[i](WebViewJavascriptBridge);
-		}
-	}
 })();

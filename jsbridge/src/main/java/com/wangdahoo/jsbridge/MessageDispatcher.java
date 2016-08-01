@@ -1,6 +1,5 @@
 package com.wangdahoo.jsbridge;
 
-import android.telecom.Call;
 import android.webkit.JavascriptInterface;
 
 import org.json.JSONArray;
@@ -11,47 +10,52 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by tom on 16/8/1.
+ * 消息派发组件
+ * 拦截js端发送过来的消息，然后派发给消息中指定的消息处理组件（Handler）进行处理
  */
+
 public class MessageDispatcher {
-    private Callback callback;
+    final String TAG = "MESSAGE_DISPATCHER";
+    final String DEFAULT_HANDLER = "DefaultHandler";
 
-    private DefaultMessageHandler defaultMessageHandler = new DefaultMessageHandler();
+    Map<String, MessageHandler> handlers;
 
-    private Map<String, MessageHandler> handlers = new HashMap<String, MessageHandler>();
-
-    public MessageDispatcher(Callback callback) {
-        this.callback = callback;
-    }
+    Callback callback;
 
     public MessageDispatcher() {
-
+        handlers = new HashMap<String, MessageHandler>();
+        this.registerHandler(DEFAULT_HANDLER, new BaseMessageHandler());
     }
 
-    public void addMessageHandler(String handlerName, MessageHandler handler) {
-        handlers.put(handlerName, handler);
+    public void setCallback(Callback _callback) {
+        callback = _callback;
     }
 
+    /**
+     * 注：该方法需要通过注释@JavascriptInterface曝露到js环境中
+     * @param messageQueueStr
+     */
     @JavascriptInterface
     public void onReceiveMessage(String messageQueueStr) {
         try {
             JSONArray messageQueue = new JSONArray(messageQueueStr);
             for (int i=0; i<messageQueue.length(); i++) {
                 JSONObject message = messageQueue.getJSONObject(i);
-
                 String handlerName = message.getString("handlerName");
-                MessageHandler handler = handlers.get(handlerName);
 
-                if (handler != null) {
-                    handler.handle(message, callback);
+                if (handlers.containsKey(handlerName)) {
+                    handlers.get(handlerName).handle(message, callback);
                 } else {
-                    defaultMessageHandler.handle(message, callback);
+                    handlers.get(DEFAULT_HANDLER).handle(message, callback);
                 }
             }
-
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    public void registerHandler(String handlerName, MessageHandler handler) {
+        this.handlers.put(handlerName, handler);
     }
 
 }

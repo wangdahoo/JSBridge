@@ -4,14 +4,10 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 
 /**
  * Created by tom on 16/8/1.
@@ -20,32 +16,24 @@ import java.io.InputStreamReader;
 @SuppressLint("SetJavaScriptEnabled")
 public class JSBridgeWebView extends WebView {
 
-    MessageDispatcher messageDispatcher;
+    final String TAG = "JBWV";
 
-    /**
-     *
-     * @param context
-     * @param messageDispatcher 传入已经注册好组件的MessageDispatcher实例
-     */
-    public JSBridgeWebView(Context context, MessageDispatcher messageDispatcher) {
+    public JSBridgeWebView(Context context) {
         super(context);
-        initWebViewSettings();
-        this.messageDispatcher = messageDispatcher;
+        init();
     }
 
-    public JSBridgeWebView(Context context, AttributeSet attrs, MessageDispatcher messageDispatcher) {
+    public JSBridgeWebView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        initWebViewSettings();
-        this.messageDispatcher = messageDispatcher;
+        init();
     }
 
-    public JSBridgeWebView(Context context, AttributeSet attrs, int defStyleAttr, MessageDispatcher messageDispatcher) {
+    public JSBridgeWebView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        initWebViewSettings();
-        this.messageDispatcher = messageDispatcher;
+        init();
     }
 
-    private void initWebViewSettings() {
+    private void init() {
 
         this.setInitialScale(0);
         this.setVerticalScrollBarEnabled(false);
@@ -89,48 +77,5 @@ public class JSBridgeWebView extends WebView {
         // Reset UserAgent
         String defaultUserAgent = settings.getUserAgentString();
         settings.setUserAgentString(defaultUserAgent + " JSBridge/1.0.0");
-
-        // Set WebViewClient
-        this.setWebViewClient(new JSBridgeWebViewClient(this));
-        this.setWebChromeClient(new WebChromeClient());
-
-        injectJSBridge(this, "WebViewJavascriptBridge.js");
-    }
-
-    public static void injectJSBridge(JSBridgeWebView webView, String url) {
-        String jsContent = assetFile2Str(webView.getContext(), url);
-        webView.loadUrl("javascript:" + jsContent);
-    }
-
-    public static String assetFile2Str(Context c, String urlStr) {
-        InputStream in = null;
-        try {
-            in = c.getAssets().open(urlStr);
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
-            String line = null;
-            StringBuilder sb = new StringBuilder();
-            do {
-                line = bufferedReader.readLine();
-                if (line != null && !line.matches("^\\s*\\/\\/.*")) {
-                    sb.append(line);
-                }
-            } while (line != null);
-
-            bufferedReader.close();
-            in.close();
-
-            return sb.toString();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (in != null) {
-                try {
-                    in.close();
-                } catch (IOException e) {
-
-                }
-            }
-        }
-        return null;
     }
 }

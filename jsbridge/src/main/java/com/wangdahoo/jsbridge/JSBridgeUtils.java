@@ -1,4 +1,4 @@
-package com.wangdahoo.example;
+package com.wangdahoo.jsbridge;
 
 import android.content.Context;
 import android.webkit.WebView;
