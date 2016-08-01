@@ -8,7 +8,7 @@
     registerHandler: registerHandler,
     callHandler: callHandler,
     _fetchQueue: _fetchQueue,
-    // _handleMessageFromJava: _handleMessageFromJava
+    _responseBackFromJava: _responseBackFromJava
   };
 
   var CUSTOM_PROTOCOL_SCHEME = 'wvjbscheme';
@@ -87,6 +87,23 @@
     return messageQueueString;
   }
 
+  /**
+   * 原生代码调用这个方法来发回response到js端
+   * @param messageJSON
+   * @private
+   */
+  function _responseBackFromJava(messageJSON) {
+    var message = JSON.parse(messageJSON);
+    var responseId = message.responseId;
 
+    if (responseId) {
+      var cb = responseCallbacks[message.responseId];
+      if (!cb) {
+        return;
+      }
+      cb(message.responseData);
+      delete responseCallbacks[message.responseId];
+    }
+  }
 
 })();

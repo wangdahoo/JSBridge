@@ -1,7 +1,5 @@
 package com.wangdahoo.example;
 
-import android.telecom.Call;
-import android.util.Log;
 import android.webkit.JavascriptInterface;
 
 import org.json.JSONArray;
@@ -24,9 +22,10 @@ public class MessageDispatcher {
 
     Callback callback;
 
-    public MessageDispatcher() {
+    public MessageDispatcher(Callback callback) {
         this.handlers = new HashMap<String, MessageHandler>();
-        this.registerHandler("DefaultHandler", new BaseMessageHandler());
+        this.callback = callback;
+        this.registerHandler(DEFAULT_HANDLER, new BaseMessageHandler());
     }
 
     /**

@@ -36,11 +36,13 @@ public class BaseMessageHandler implements MessageHandler {
 
     public static String makeResponseWithResults(String callbackId, Object[] results) {
         JSONObject response = initResponse(callbackId);
+        JSONObject responseData = new JSONObject();
         try {
             for (int i=0; i<results.length/2; i++) {
                 String key = (String) results[2*i];
-                response.put(key, results[2*i + 1]);
+                responseData.put(key, results[2*i + 1]);
             }
+            response.put("responseData", responseData);
         } catch (JSONException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -55,10 +57,12 @@ public class BaseMessageHandler implements MessageHandler {
 
     private static JSONObject initResponse(String callbackId) {
         JSONObject response = new JSONObject();
+        JSONObject responseData = new JSONObject();
 
         try {
-            response.put("callbackId", callbackId);
-            response.put("status", 1);
+            response.put("responseId", callbackId);
+            responseData.put("status", 1);
+            response.put("responseData", responseData);
         } catch (JSONException e) {
             e.printStackTrace();
         }

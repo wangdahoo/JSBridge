@@ -1,7 +1,5 @@
 package com.wangdahoo.jsbridge;
 
-import android.net.Uri;
-import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 

@@ -19,6 +19,20 @@ public class WebViewActivity extends AppCompatActivity {
 
     WebView webView;
 
+    private Callback callback = new Callback() {
+        @Override
+        public void onCallback(final String data) {
+            Log.i(TAG, "Message has been handled by handler, send back response to js"); // 再把消息发回给js环境
+
+            webView.post(new Runnable() {
+                @Override
+                public void run() {
+                    webView.loadUrl("javascript:window.WebViewJavascriptBridge._responseBackFromJava('" + data + "')");
+                }
+            });
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,7 +51,7 @@ public class WebViewActivity extends AppCompatActivity {
             webView.setWebContentsDebuggingEnabled(true);
         }
 
-        MessageDispatcher messageDispatcher = new MessageDispatcher();
+        MessageDispatcher messageDispatcher = new MessageDispatcher(callback);
         messageDispatcher.registerHandler("DialogAlert", new DialogAlertHandler(this));
 
         webView.addJavascriptInterface(messageDispatcher, "MessageDispatcher");
