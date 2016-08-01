@@ -3,6 +3,7 @@ package com.wangdahoo.example;
 import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
@@ -10,6 +11,8 @@ import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
 public class WebViewActivity extends AppCompatActivity {
+
+    final String TAG = "WEBVIEW_ACTIVITY";
 
     final String CUSTOM_PROTOCOL_SCHEME = "wvjbscheme";
     final String QUEUE_HAS_MESSAGE = "__WVJB_QUEUE_MESSAGE__";
@@ -34,8 +37,10 @@ public class WebViewActivity extends AppCompatActivity {
             webView.setWebContentsDebuggingEnabled(true);
         }
 
-        webView.addJavascriptInterface(new MessageDispatcher(), "MessageDispatcher");
+        MessageDispatcher messageDispatcher = new MessageDispatcher();
+        messageDispatcher.registerHandler("DialogAlert", new DialogAlertHandler(this));
 
+        webView.addJavascriptInterface(messageDispatcher, "MessageDispatcher");
         JSBridgeUtils.injectJSBridge(webView, "WebViewJavascriptBridge.js");
 
         ViewGroup layout = (ViewGroup) findViewById(R.id.webview_activity);
@@ -43,13 +48,15 @@ public class WebViewActivity extends AppCompatActivity {
 
 //        webView.loadUrl("http://www.baidu.com");
 
-         webView.loadUrl("file:///android_asset/index.html");
+        webView.loadUrl("file:///android_asset/index.html");
     }
 
     private class MyWebViewClient extends WebViewClient {
 
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
+
+            Log.i(TAG, "url: " + url);
 
             // 拦截js端发送过来的消息
             if (url.startsWith(CUSTOM_PROTOCOL_SCHEME + "://" + QUEUE_HAS_MESSAGE)) {

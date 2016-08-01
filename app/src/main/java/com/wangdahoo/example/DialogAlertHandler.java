@@ -4,10 +4,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.support.v7.app.AlertDialog;
 
-import com.wangdahoo.jsbridge.BaseMessageHandler;
-import com.wangdahoo.jsbridge.Callback;
-import com.wangdahoo.jsbridge.MessageHandler;
-
 import org.json.JSONObject;
 
 /**

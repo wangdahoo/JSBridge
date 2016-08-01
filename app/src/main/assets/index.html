@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="http://cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">
-  <!--<script src="WebViewJavascriptBridge.js"></script>-->
 
   <script>
     function setupWebViewJavascriptBridge(callback) {
@@ -36,9 +35,9 @@
 <script>
 
   /* DialogAlert */
-  function DialogAlert(message) {
+  function DialogAlert(content) {
     setupWebViewJavascriptBridge(function (bridge) {
-      bridge.callHandler('DialogAlert', {message: message}, function (response) {
+      bridge.callHandler('DialogAlert', {content: content}, function (response) {
         console.log(response);
       })
     });

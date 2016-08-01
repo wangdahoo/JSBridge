@@ -14,7 +14,12 @@
   var CUSTOM_PROTOCOL_SCHEME = 'wvjbscheme';
   var QUEUE_HAS_MESSAGE = '__WVJB_QUEUE_MESSAGE__';
 
+  /**
+   * 用于发送消息的iFrame
+   * @type {Element}
+   */
   var messagingIframe;
+
   var sendMessageQueue = [];
   var responseCallbacks = {};
 
@@ -62,7 +67,14 @@
     // 将消息放入消息队列中, 等待原生代码读取
     sendMessageQueue.push(message);
     // 通知原生代码消息队列中有消息
+    //messagingIframe.src = CUSTOM_PROTOCOL_SCHEME + '://' + QUEUE_HAS_MESSAGE;
+
+    messagingIframe = document.createElement('iframe');
+    messagingIframe.style.display = 'none';
     messagingIframe.src = CUSTOM_PROTOCOL_SCHEME + '://' + QUEUE_HAS_MESSAGE;
+    document.documentElement.appendChild(messagingIframe);
+
+    setTimeout(function () { document.documentElement.removeChild(messagingIframe) });
   }
 
   /**
@@ -75,14 +87,6 @@
     return messageQueueString;
   }
 
-  /**
-   * 用于发送消息的iFrame
-   * @type {Element}
-   */
-  messagingIframe = document.createElement('iframe');
-  messagingIframe.style.display = 'none';
-  messagingIframe.src = CUSTOM_PROTOCOL_SCHEME + '://' + QUEUE_HAS_MESSAGE;
-  document.documentElement.appendChild(messagingIframe);
 
 
 })();
