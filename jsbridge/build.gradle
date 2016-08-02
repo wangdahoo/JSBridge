@@ -19,6 +19,19 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:24.1.1'
 }
+
+task makeJar(type: Jar) {
+    delete "build/libs/jsbridge-1.0.0.jar"
+
+    baseName = "jsbridge"
+    version = "1.0.0"
+    from("build/intermediates/classes/release")
+    exclude([
+            'com/wangdahoo/jsbridge/BuildConfig.class',
+            'com/wangdahoo/jsbridge/R.class'
+    ])
+    exclude { it.name.startsWith('R$'); }
+}
+
+makeJar.dependsOn(build)
