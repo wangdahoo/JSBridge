@@ -35,3 +35,10 @@ task makeJar(type: Jar) {
 }
 
 makeJar.dependsOn(build)
+
+task publish(type: Copy) {
+    from(["src/main/assets/WebViewJavascriptBridge.js", "build/libs/jsbridge-1.0.0.jar"])
+    into("dist/")
+}
+
+publish.dependsOn(makeJar)
