@@ -2,7 +2,7 @@
 
 #### gradle script for jsbridge.jar
 
-```
+```bash
 ./gradlew :jsbridge:publish
 ```
 
@@ -50,7 +50,7 @@ import com.wangdahoo.jsbridge.MessageDispatcher;
     
 ```
 
-```
+```java
 // 实现MessageHanlder
 
 public class DialogAlertHandler extends BaseMessageHandler implements MessageHandler {
