@@ -21,7 +21,7 @@ dependencies {
 
 3. Sample Code
 
-```
+```java
 // Code In Activity: 
 import com.wangdahoo.jsbridge.JSBridgeWebView;
 import com.wangdahoo.jsbridge.JSBridgeWebViewClient;
