@@ -11,6 +11,8 @@ import java.io.InputStreamReader;
 /**
  * Created by tom on 16/8/1.
  */
+
+@Deprecated
 public class JSBridgeUtils {
 
     public static void injectJSBridge(WebView webView, String url) {

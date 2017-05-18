@@ -35,7 +35,9 @@ public class JSBridgeWebViewClient extends WebViewClient {
         webView = _webView;
         messageDispatcher.setCallback(callback);
         webView.addJavascriptInterface(messageDispatcher, "MessageDispatcher");
-        JSBridgeUtils.injectJSBridge(webView, "WebViewJavascriptBridge.js");
+
+//        改为网页端加载WebViewJavascriptBridge.js
+//        JSBridgeUtils.injectJSBridge(webView, "WebViewJavascriptBridge.js");
     }
 
     @Override
